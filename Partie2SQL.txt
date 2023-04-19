@@ -1,0 +1,154 @@
+-- Requete 1 --
+SELECT DISTINCT NOMCLIENT, PRENOMCLIENT, PRIXACTIVITE
+FROM ag_clients, ag_estinscrit, ag_departs, ag_voyages, ag_estproposee, ag_activites
+WHERE ag_clients.NumClient = ag_estinscrit.numclient
+AND ag_estinscrit.numdepart = ag_departs.numdepart
+AND ag_departs.numvoyage = ag_voyages.numvoyage
+and ag_voyages.numvoyage = ag_estproposee.numvoyage
+AND ag_estproposee.numactivite = ag_activites.numactivite
+and ag_activites.prixactivite > 50;
+
+SELECT DISTINCT NomClient, PrenomClient, Prixactivite
+FROM ag_clients INNER JOIN ag_estinscrit ON (ag_clients.NumClient = ag_estinscrit.numclient)
+INNER JOIN ag_departs ON (ag_estinscrit.numdepart = ag_departs.numdepart)
+INNER JOIN ag_voyages ON (ag_departs.numvoyage = ag_voyages.numvoyage)
+INNER JOIN ag_estproposee ON (ag_voyages.numvoyage = ag_estproposee.numvoyage)
+INNER JOIN ag_activites  ON (ag_estproposee.numactivite = ag_activites.numactivite)
+WHERE ag_activites.prixactivite > 50;
+
+-- Requete 2 --
+SELECT DISTINCT ag_voyages.intitulevoyage, ag_activites.intituleactivite
+FROM ag_voyages LEFT JOIN ag_estproposee 
+ON (ag_voyages.numvoyage = ag_estproposee.numvoyage)
+LEFT JOIN ag_activites  
+ON (ag_estproposee.numactivite = ag_activites.numactivite) ;
+
+-- Requete 3 --
+SELECT DISTINCT Intitulevoyage
+FROM ag_voyages, ag_itineraires, ag_villes
+WHERE ag_voyages.numvoyage = ag_itineraires.numvoyage
+and ag_itineraires.numville = ag_villes.numville
+and ag_villes.nomville = 'Ventron'
+OR (ag_voyages.dureevoyage >= 8 AND ag_voyages.prixhtvoyage > 1000) ;
+
+-- Requete 4 --
+SELECT DISTINCT Intitulevoyage, ag_departs.nbrplacedepart, ag_itineraires.nbrplacevoyage
+FROM ag_voyages, ag_itineraires, ag_departs
+WHERE ag_voyages.numvoyage = ag_itineraires.numvoyage
+AND ag_voyages.numvoyage = ag_departs.numvoyage
+AND ag_itineraires.nbrplacevoyage = ag_departs.nbrplacedepart ;
+
+-- Requete 5 --
+SELECT Nomclient, faxclient, telclient
+FROM ag_clients
+WHERE telclient is null and faxclient is null;
+
+-- Requete 6 --
+SELECT NumDepart, datedepart
+FROM AG_Departs
+WHERE NumVoyage = 15 OR nbrplacedepart > 35;
+
+-- Requete 7 --
+SELECT DISTINCT(ag_clients.NomClient)
+FROM ag_clients INNER JOIN ag_estinscrit
+ON (ag_clients.numclient = ag_estinscrit.NumClient)
+WHERE EXTRACT(YEAR FROM DateInscription) BETWEEN 2001 AND 2003;
+
+-- Requete 8 --
+SELECT DISTINCT NomClient, PrenomClient
+FROM ag_clients INNER JOIN ag_estinscrit
+ON (ag_clients.numclient = ag_estinscrit.numclient)
+INNER JOIN ag_departs
+ON(ag_estinscrit.numdepart = ag_departs.numdepart)
+WHERE TO_CHAR(DateDepart, 'DD/MM/YYYY') BETWEEN '15/01/2005' AND '31/07/2006'
+ORDER BY ag_clients.nomclient;
+
+-- Requete 9 --
+SELECT *
+FROM ag_departs
+WHERE EXTRACT (YEAR FROM dateDepart) < Extract (Year FROM Current_date);
+
+-- Requete 10 --
+SELECT Numdepart, nbrplacedepart
+FROM ag_departs
+WHERE EXTRACT (YEAR FROM dateDepart) = '2006';
+
+-- Requete 11 --
+SELECT nomclient, prenomclient, telclient, faxclient
+FROM ag_clients
+WHERE faxclient IS NOT NULL
+AND localiteclient = 'Bruxelles'
+UNION
+SELECT nomclient, prenomclient, telclient, 'Inconnu'
+FROM ag_clients
+WHERE faxclient IS NULL
+AND localiteclient = 'Bruxelles';
+
+-- Requete 12 --
+SELECT IntituleVoyage, DateDepart
+FROM ag_departs INNER JOIN ag_voyages
+ON (ag_voyages.numvoyage = ag_departs.numvoyage)
+WHERE DateDepart = (SELECT MIN(ag_departs.datedepart) FROM ag_departs);
+
+-- Requete 13 --
+SELECT DISTINCT ag_activites.Intituleactivite, ag_activites.dureeactivite, ag_activites.prixactivite
+FROM ag_activites, ag_estproposee, ag_voyages
+WHERE ag_activites.numactivite = ag_estproposee.numactivite
+AND ag_estproposee.Numvoyage = ag_voyages.numvoyage
+AND ag_activites.prixactivite IS NULL 
+OR ag_activites.prixactivite < (SELECT AVG(ag_activites.prixactivite) FROM ag_activites);
+
+-- Requete 14 --
+SELECT NomClient, PrenomClient
+FROM he_client
+WHERE (TO_CHAR(DateNaissance, 'DD/MM/YYYY') > '01/01/1961' OR TelClient IS NOT NULL)
+AND TypeClient = 'O';
+SELECT NomClient, PrenomClient
+FROM he_client
+WHERE TO_CHAR(DateNaissance, 'DD/MM/YYYY') > '01/01/1961' AND TypeClient = 'O'
+UNION
+SELECT NomClient, PrenomClient
+FROM he_client
+WHERE TelClient is not null  AND TypeClient = 'O';
+
+-- Requete 15 --
+SELECT *
+FROM he_client
+WHERE VilleClient ='Bruxelles'
+INTERSECT
+SELECT *
+FROM he_client
+WHERE PaysOrigine = 'Belgique';
+
+-- Requete 16 --
+SELECT NomPilote, TelPilote
+FROM he_pilote
+WHERE VillePilote = 'Bruxelles' AND TelPilote IS NOT NULL
+UNION
+SELECT NomPilote, 'Inconnu'
+FROM he_pilote
+WHERE VillePilote = 'Bruxelles' AND TelPilote IS NULL
+ORDER BY NomPilote DESC;
+
+-- Requete 17 --
+SELECT *
+FROM he_facture
+WHERE MontantFacture > 300
+INTERSECT 
+SELECT *
+FROM he_facture
+WHERE ResteAPayer < 100;
+SELECT *
+FROM he_facture
+WHERE MontantFacture > 300 AND ResteAPayer < 100;
+
+-- Requete 18 --
+SELECT NomClient, PrenomClient, he_reservation.numreservation
+FROM he_Client LEFT OUTER join he_reservation
+ON (He_client.numClient = He_reservation.numclient);
+
+-- Requete 19 --
+SELECT SUM(MontantFacture) 
+FROM He_client INNER JOIN He_facture
+ON(He_client.Numclient = He_facture.numclient)
+WHERE NomClient = 'Lejeune';
