@@ -1,0 +1,343 @@
+--Requete1--
+
+SELECT NomClient, PrenomClient, AG_EstInscrit.NumDepart, COUNT(AG_EstInscrit.NumParticipant) AS NombreParticipants
+FROM AG_Clients INNER JOIN AG_EstInscrit
+ON (AG_Clients.NumClient = Ag_EstInscrit.NumClient)
+GROUP BY  NomClient, PrenomClient, AG_EstInscrit.NumDepart;
+
+--Requete2--
+
+SELECT NomClient, PrenomClient, AG_EstInscrit.NumDepart, COUNT(AG_EstInscrit.NumParticipant) AS NombreParticipants
+FROM AG_Clients INNER JOIN AG_EstInscrit
+ON (AG_Clients.NumClient = Ag_EstInscrit.NumClient)
+GROUP BY  NomClient, PrenomClient, AG_EstInscrit.NumDepart
+HAVING COUNT(AG_EstInscrit.NumParticipant)> 3;
+
+--Requete3--
+
+SELECT NumImmatriculation, Marque
+FROM AG_Cars
+WHERE NumImmatriculation 
+    	NOT IN (SELECT NumImmatriculation 
+           		    FROM ag_estaffecte);
+
+
+SELECT NumImmatriculation, Marque
+FROM AG_Cars
+WHERE NOT EXISTS
+         (SELECT * 
+            FROM ag_estaffecte
+            WHERE ag_estaffecte.numimmatriculation = ag_cars.numimmatriculation);
+
+--Requete4--
+
+INSERT INTO AG_Clients (NumClient,NomClient, PrenomClient, AdresseClient, CodePostalClient, LocaliteClient)
+VALUES ('24','Fraikin', 'Julie', '2 Rue de la Tour', '4520','Wanze');
+
+INSERT INTO AG_Clients
+VALUES ('25','Fraikin', 'Julie', '2 Rue de la Tour', '4520','Wanze', NULL, NULL);
+
+--Requete5--
+
+create table PaysAccompaganteur
+  (	  	Ville varchar2(12 char) constraint PaysAccompagnateur primary key, 
+		Pays varchar2(15 char));
+
+INSERT INTO PaysAccompagnateur (Ville, Pays)
+ SELECT DISTINCT AG_Accompagnateurs.LocaliteAccompagnateur, AG_Accompagnateurs.PaysAccompagnateur
+ FROM AG_Accompagnateurs;
+
+--Requete6--
+
+Update AG_Clients SET TELClient = '02/2589777' WHERE NumClient = 3;
+
+--Requete7--
+
+DELETE FROM AG_ACTIVITES WHERE NbrPlaceActivite < 40;
+
+--Requete8--
+
+SELECT Ag_Voyages.NumVoyage, PrixHTVoyage, COUNT(AG_Departs.NumDepart) AS NbrDeparts
+FROM AG_Voyages INNER JOIN AG_Departs
+ON (AG_Voyages.numvoyage = AG_Departs.NumVoyage)
+GROUP BY Ag_Voyages.NumVoyage, PrixHTVoyage;
+
+--Requete9--
+
+SELECT NomClient, PrenomClient, DateDepart, COUNT(AG_EstInscrit.numparticipant) AS NbrParticipant
+FROM AG_Clients, AG_EstInscrit, AG_Departs
+WHERE AG_Clients.NumClient = ag_estinscrit.numclient
+AND ag_estinscrit.numdepart = AG_Departs.NumDepart
+GROUP BY ag_clients.numclient,NomClient, PrenomClient, DateDepart;
+
+--Requete10--
+
+SELECT AG_Departs.NumDepart, COUNT(AG_Clients.NumClient) AS NbrClient
+FROM AG_Clients INNER JOIN AG_EstInscrit
+ON (AG_Clients.numclient = AG_EstInscrit.NumClient)
+INNER JOIN AG_Departs
+ON (AG_EstInscrit.NumDepart = AG_Departs.NumDepart)
+WHERE CAST(DateDepart AS Date)
+BETWEEN CAST('01/07/2006' AS Date) AND CAST('31/07/2006' AS Date)
+GROUP BY AG_Departs.NumDepart 
+UNION
+SELECT AG_Departs.NumDepart, 00
+FROM AG_Departs
+WHERE NumDepart NOT IN (SELECT NumDepart FROM AG_EstInscrit);
+
+--Requete11--
+
+SELECT NomAccompagnateur, PrenomAccompagnateur, 
+COUNT (AG_Connait.codelangue) AS NbrLangue
+FROM AG_Accompagnateurs INNER JOIN ag_connait 
+ON (AG_Accompagnateurs.NumAccompagnateur = AG_Connait.NumAccompagnateur)
+GROUP BY ag_accompagnateurs.nomaccompagnateur, ag_accompagnateurs.prenomaccompagnateur
+ORDER BY ag_accompagnateurs.nomaccompagnateur, ag_accompagnateurs.prenomaccompagnateur;
+
+--Requete12--
+
+SELECT NomAccompagnateur, PrenomAccompagnateur, AG_Cars.numimmatriculation
+FROM AG_Cars INNER JOIN AG_EstAffecte
+ON (AG_Cars.NumImmatriculation = AG_EstAffecte.NumImmatriculation)
+INNER JOIN AG_Departs
+ON(Ag_EstAffecte.NumDepart = AG_Departs.NumDepart)
+INNER JOIN AG_EstEncadre
+ON (AG_Departs.NumDepart = AG_EstEncadre.NumDepart)
+INNER JOIN AG_Accompagnateurs
+ON (AG_EstEncadre.NumAccompagnateur = AG_Accompagnateurs.NumAccompagnateur)
+WHERE AG_Departs.NumVoyage 
+NOT IN (SELECT NumVoyage FROM AG_Voyages
+                                    WHERE IntituleVoyage IN ('Ski1', 'Ski2', 'Ski3'))
+    ORDER BY NomAccompagnateur DESC, prenomAccompagnateur DESC;
+
+--Requete13--
+
+SELECT NomAccompagnateur, PrenomAccompagnateur, AdresseAccompagnateur, CodePostalAccompagnateur, LocaliteAccompagnateur
+FROM AG_Accompagnateurs INNER JOIN AG_Connait
+ON (AG_Accompagnateurs.NumAccompagnateur = AG_Connait.NumAccompagnateur)
+GROUP BY NomAccompagnateur, PrenomAccompagnateur, AdresseAccompagnateur, CodePostalAccompagnateur, LocaliteAccompagnateur
+Having COUNT(Codelangue)>2;
+
+--Requete14--
+
+SELECT Ag_Departs.NumDepart,DateDepart,COUNT(NumParticipant) AS NBRParticipant, SUM(PrixHtVoyage) AS Total
+FROM AG_departs, AG_EstInscrit, AG_Voyages
+WHERE (AG_Departs.NumDepart = AG_EstInscrit.Numdepart)
+AND (AG_Departs.NumVoyage = AG_Voyages.NumVoyage)
+Group BY AG_Departs.NumDepart,DateDepart;
+
+--Requete15--
+
+SELECT Ag_Departs.NumDepart,DateDepart,NBRPlaceDepart, COUNT(NumParticipant) AS NBRParticipant
+FROM AG_departs, AG_EstInscrit, AG_Voyages
+WHERE (AG_Departs.NumDepart = AG_EstInscrit.Numdepart)
+AND (AG_Departs.NumVoyage = AG_Voyages.NumVoyage)
+Group BY AG_Departs.NumDepart,DateDepart,NbrPlaceDepart
+HAVING NbrPlaceDepart > Count(NumParticipant);
+
+--Requete15--
+
+--Requete16--
+
+SELECT *
+FROM AG_Clients
+WHERE NumClient IN (SELECT NumClient FROM AG_EstInscrit);
+
+SELECT *
+FROM AG_Clients
+WHERE EXISTS (SELECT * FROM AG_EstInscrit
+            WHERE AG_Clients.NumClient = AG_EstInscrit.NumClient);
+
+--Requete17--
+
+SELECT DISTINCT IntituleVoyage, NomClient, 'FINI'
+FROM AG_Clients, AG_EstInscrit, AG_Departs, AG_Voyages
+WHERE AG_Clients.NumClient = AG_EstInscrit.NumClient
+AND AG_EstInscrit.NumDepart = AG_Departs.NumDepart
+AND AG_Departs.NumVoyage = AG_Voyages.NumVoyage
+AND CAST(DateDepart AS Date) < CAST(sysDate AS Date)
+UNION
+SELECT DISTINCT IntituleVoyage, NomClient, 'A venir'
+FROM AG_Clients, AG_EstInscrit, AG_Departs, AG_Voyages
+WHERE AG_Clients.NumClient = AG_EstInscrit.NumClient
+AND AG_EstInscrit.NumDepart = AG_Departs.NumDepart
+AND AG_Departs.NumVoyage = AG_Voyages.NumVoyage
+AND CAST(DateDepart AS Date) >= CAST(sysdate AS Date);
+
+--Requete18--
+
+SELECT DISTINCT IntituleVoyage, NomClient, 'FINI'
+FROM AG_Clients, AG_EstInscrit, AG_Departs, AG_Voyages
+WHERE AG_Clients.NumClient = AG_EstInscrit.NumClient
+AND AG_EstInscrit.NumDepart = AG_Departs.NumDepart
+AND AG_Departs.NumVoyage = AG_Voyages.NumVoyage
+AND CAST(DateDepart AS Date) < CAST(’15/03/2006’ AS Date)
+UNION
+SELECT DISTINCT IntituleVoyage, NomClient, 'A venir'
+FROM AG_Clients, AG_EstInscrit, AG_Departs, AG_Voyages
+WHERE AG_Clients.NumClient = AG_EstInscrit.NumClient
+AND AG_EstInscrit.NumDepart = AG_Departs.NumDepart
+AND AG_Departs.NumVoyage = AG_Voyages.NumVoyage
+AND CAST(DateDepart AS Date) >= CAST('15/03/2006' AS Date);
+
+--Requete19--
+
+SELECT AG_Voyages.numVoyage, IntituleVoyage
+FROM AG_Voyages INNER JOIN AG_Itineraires
+ON (AG_Itineraires.NumVoyage = AG_Voyages.NumVoyage)
+WHERE Ag_Voyages.NumVoyage NOT IN 
+                        (SELECT NumVoyage FROM AG_EstProposee)
+GROUP BY AG_Voyages.numVoyage, IntituleVoyage
+HAVING COUNT(AG_Itineraires.NumVille)> 3;
+
+--Requete20--
+
+SELECT NomClient, TelClient
+FROM HE_Client
+WHERE TELClient IS NOT NULL
+AND CAST(DateNaissance AS Date) > CAST('01/01/1961' AS Date)
+UNION 
+SELECT NomClient, 'A encoder'
+FROM HE_Client
+WHERE TELClient IS NULL
+AND CAST(DateNaissance AS Date) > CAST('01/01/1961' AS Date)
+ORDER BY NomClient;
+
+--Requete21--
+
+SELECT NomPilote, COUNT(HE_Vol.NumVol)
+FROM HE_Pilote INNER JOIN HE_Vol
+ON (HE_Pilote.CodePilote = HE_Vol.CodePilote)
+WHERE VillePilote = 'Bruxelles'
+GROUP BY He_Pilote.CodePilote, NomPilote;
+
+--Requete22--
+
+SELECT NomClient, COUNT(HE_Reservation.NumReservation)
+FROM HE_Client INNER JOIN HE_Reservation
+ON (HE_Client.NumClient = HE_Reservation.NumClient)
+WHERE PaysOrigine = 'Belgique'
+GROUP BY HE_Client.NumClient, NomClient;
+
+--Requete23--
+
+SELECT NomPilote, NumVol, DateHeureVol
+FROM HE_Pilote, he_vol
+WHERE He_Pilote.CodePilote = HE_Vol.CodePilote
+GROUP BY NomPilote, NumVol, DateHeureVol
+HAVING SUM(DureeVol) >= 10;
+
+--Requete23--
+
+SELECT NomClient, NumFacture, DateFacture
+FROM he_client INNER JOIN he_facture
+ON (HE_Client.NumClient = HE_Facture.NumClient)
+GROUP BY NomClient, NumFacture, DateFacture
+HAVING SUM(MontantFacture) >= 1000;
+
+--Requete24--
+
+SELECT NomPilote, PrenomPilote
+FROM HE_Pilote
+WHERE CodePilote NOT IN
+                (SELECT CodePilote
+                FROM HE_VOL);
+
+SELECT NomPilote, PrenomPilote
+FROM HE_Pilote
+WHERE NOT EXISTS
+                (SELECT *
+                FROM HE_VOL
+                WHERE HE_Pilote.CodePilote = HE_Vol.CodePilote );
+
+--Requete26--
+
+SELECT NomClient, PrenomClient, TelClient
+FROM HE_CLIENT
+WHERE (VilleClient = 'Namur' OR VilleClient = 'Liège') AND TelClient IS NOT NULL
+AND NumClient NOT IN 
+                (SELECT NumClient
+                FROM HE_RESERVATION)
+UNION 
+SELECT NomClient, PrenomClient, '****'
+FROM HE_CLIENT
+WHERE (VilleClient = 'Namur' OR VilleClient = 'Liège') AND TelClient IS NULL
+AND NumClient NOT IN 
+                (SELECT NumClient
+                FROM HE_RESERVATION);
+
+--Requete27--
+
+SELECT DateHeureVol, PrixPlace
+FROM HE_Vol
+WHERE Immatriculation NOT IN 
+                (SELECT Immatriculation
+                FROM HE_Appareil
+                WHERE NbPlaces >= 5);
+
+--Requete28--
+
+SELECT NomClient, PrenomClient, TelClient
+FROM HE_CLIENT
+WHERE NumClient IN 
+                (SELECT NumClient
+                FROM HE_RESERVATION
+                WHERE Confirmation = 1) ;
+
+SELECT NomClient, PrenomClient, TelClient
+FROM HE_CLIENT
+WHERE EXISTS 
+                (SELECT *
+                FROM HE_RESERVATION
+                WHERE Confirmation = 1
+                AND HE_Client.NumClient = HE_Reservation.NumClient);
+
+
+SELECT DISTINCT NomClient, PrenomClient, TelClient
+FROM HE_CLIENT INNER JOIN HE_Reservation
+ON ( HE_Client.NumClient = HE_Reservation.NumClient)
+WHERE Confirmation = 1;
+
+
+
+--Requete29--
+
+SELECT NomPilote, PrenomPilote, SUM(DureeVol)
+FROM HE_Pilote INNER JOIN HE_Vol
+ON (HE_Pilote.CodePilote = HE_Vol.CodePilote)
+WHERE VillePilote = 'Bruxelles'
+GROUP BY HE_Pilote.CodePilote, NomPilote, PrenomPilote
+HAVING SUM(DureeVol) > (SELECT AVG(DureeVol) FROM HE_VOL
+                            WHERE IMMATRICULATION IN 
+                                        (SELECT IMMATRICULATION FROM HE_Appareil
+                                        WHERE Immatriculation = 'JGT398'));
+
+--Requete30--
+
+INSERT INTO HE_Client (NumClient, NomClient, PrenomClient, DateNaissance, PaysOrigine, CodePostalClient, AdresseClient, VilleClient)
+VALUES (5555, 'Dupont', 'Alain','05/01/1960', 'Belge', '1050', 'Rue des allouettes', 'Bruxelles');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
